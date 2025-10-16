@@ -1,0 +1,21 @@
+{
+  "name": "livekit-video-conference",
+  "version": "1.0.0",
+  "description": "LiveKit Video Conference POC",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "npx esbuild app.js --bundle --outfile=bundle.js --format=iife --global-name=LiveKitApp",
+    "build:watch": "npx esbuild app.js --bundle --outfile=bundle.js --format=iife --global-name=LiveKitApp --watch"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.10",
+    "express": "^4.18.0",
+    "http-proxy-middleware": "^3.0.5",
+    "livekit-client": "^2.0.0",
+    "livekit-server-sdk": "^2.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

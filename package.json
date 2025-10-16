@@ -1,0 +1,30 @@
+{
+  "name": "livekit-video-conference-poc",
+  "version": "1.0.0",
+  "description": "A complete video conferencing solution built with LiveKit SFU architecture",
+  "main": "start.sh",
+  "scripts": {
+    "start": "./start.sh",
+    "start:livekit": "cd livekit-server && ./livekit-server --config livekit.yaml --dev",
+    "start:client": "cd video-conference-client && node server.js",
+    "install:client": "cd video-conference-client && npm install",
+    "build:client": "cd video-conference-client && npm run build"
+  },
+  "keywords": [
+    "livekit",
+    "video-conference",
+    "webrtc",
+    "sfu",
+    "real-time",
+    "streaming"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/livekit-video-conference.git"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

@@ -1,0 +1,10 @@
+port: 7880
+rtc:
+  udp_port: 7881
+  use_external_ip: false
+  stun_servers:
+    - stun.l.google.com:19302
+keys:
+  APIzcxfMudEq8kZ: sAdCgPUJvdmI4fNOg41Y6V1vUfYBFQ0AegddmTgujG5A
+redis: {}
+log_level: info
