@@ -2,7 +2,7 @@
 import { Room, RoomEvent, Track, TrackPublication, Participant, RemoteParticipant, LocalParticipant } from 'livekit-client';
 
 // LiveKit configuration
-const LIVEKIT_URL = 'https://e707275d8689.ngrok-free.app';
+const LIVEKIT_URL = 'ws://localhost:7880';
 const API_KEY = 'APIzcxfMudEq8kZ';
 const API_SECRET = 'sAdCgPUJvdmI4fNOg41Y6V1vUfYBFQ0AegddmTgujG5A';
 
