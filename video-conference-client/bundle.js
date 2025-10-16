@@ -23786,7 +23786,7 @@ var LiveKitApp = (() => {
   var ONE_MINUTE_IN_MILLISECONDS = 60 * ONE_SECOND_IN_MILLISECONDS;
 
   // app.js
-  var LIVEKIT_URL = "https://e707275d8689.ngrok-free.app";
+  var LIVEKIT_URL = "ws://localhost:7880";
   var room = null;
   var isMuted = false;
   var isVideoOff = false;
