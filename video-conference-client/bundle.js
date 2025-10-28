@@ -23816,10 +23816,12 @@ var LiveKitApp = (() => {
       setupRoomEventListeners(room);
       await room.connect(LIVEKIT_URL, token);
       await room.localParticipant.enableCameraAndMicrophone();
-      addParticipantVideo(room.localParticipant);
+      createParticipantMediaContainer(room.localParticipant);
+      updateParticipantVideo(room.localParticipant);
       room.remoteParticipants.forEach((participant) => {
         console.log("Adding existing remote participant:", participant.identity);
-        addParticipantVideo(participant);
+        createParticipantMediaContainer(participant);
+        updateParticipantVideo(participant);
         updateParticipantAudio(participant);
       });
       status.textContent = `Connected to room: ${roomName}`;
@@ -23854,15 +23856,17 @@ var LiveKitApp = (() => {
   }
   function onParticipantConnected(participant) {
     console.log("Participant connected:", participant.identity);
-    addParticipantVideo(participant);
+    createParticipantMediaContainer(participant);
     if (participant !== room.localParticipant) {
       updateParticipantVideo(participant);
       updateParticipantAudio(participant);
+    } else {
+      updateParticipantVideo(participant);
     }
   }
   function onParticipantDisconnected(participant) {
     console.log("Participant disconnected:", participant.identity);
-    removeParticipantVideo(participant.identity);
+    removeParticipantMediaContainer(participant.identity);
   }
   function onTrackSubscribed(track, publication, participant) {
     console.log("Track subscribed:", track.kind, participant.identity);
@@ -23908,7 +23912,7 @@ var LiveKitApp = (() => {
       videoBtn.textContent = isVideoOff ? "Turn On Video" : "Turn Off Video";
     }
   }
-  function addParticipantVideo(participant) {
+  function createParticipantMediaContainer(participant) {
     const videoContainer = document.createElement("div");
     videoContainer.className = "video-container";
     videoContainer.id = `participant-${participant.identity}`;
@@ -23928,10 +23932,6 @@ var LiveKitApp = (() => {
     videoContainer.appendChild(video);
     videoContainer.appendChild(info);
     videoGrid.appendChild(videoContainer);
-    updateParticipantVideo(participant);
-    if (participant !== room.localParticipant) {
-      updateParticipantAudio(participant);
-    }
   }
   function updateParticipantVideo(participant) {
     const video = document.getElementById(`video-${participant.identity}`);
@@ -23995,7 +23995,7 @@ var LiveKitApp = (() => {
       }, 1e3);
     }
   }
-  function removeParticipantVideo(identity) {
+  function removeParticipantMediaContainer(identity) {
     const container = document.getElementById(`participant-${identity}`);
     if (container) {
       container.remove();

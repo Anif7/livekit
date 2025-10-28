@@ -59,13 +59,15 @@ async function joinRoom() {
         // Enable camera and microphone
         await room.localParticipant.enableCameraAndMicrophone();
         
-        // Add local participant video
-        addParticipantVideo(room.localParticipant);
+        // Create UI and attach media for local participant
+        createParticipantMediaContainer(room.localParticipant);
+        updateParticipantVideo(room.localParticipant);
         
         // Add existing participants (if any)
         room.remoteParticipants.forEach(participant => {
             console.log('Adding existing remote participant:', participant.identity);
-            addParticipantVideo(participant);
+            createParticipantMediaContainer(participant);
+            updateParticipantVideo(participant);
             updateParticipantAudio(participant);
         });
         
@@ -111,21 +113,25 @@ function setupRoomEventListeners(room) {
 
 // ===== Room Event Handlers =====
 
-// Adds UI elements for newly connected participant and initializes their media
+// Creates UI and attaches media for newly connected participant
 function onParticipantConnected(participant) {
     console.log('Participant connected:', participant.identity);
-    addParticipantVideo(participant);
-    // Update video and audio immediately for remote participants
+    createParticipantMediaContainer(participant);
+    
+    // Attach media streams for remote participants
     if (participant !== room.localParticipant) {
         updateParticipantVideo(participant);
         updateParticipantAudio(participant);
+    } else {
+        // For local participant, attach video immediately
+        updateParticipantVideo(participant);
     }
 }
 
 // Removes UI elements when a participant leaves the room
 function onParticipantDisconnected(participant) {
     console.log('Participant disconnected:', participant.identity);
-    removeParticipantVideo(participant.identity);
+    removeParticipantMediaContainer(participant.identity);
 }
 
 // Attaches newly subscribed track to the participant's video or audio element
@@ -184,8 +190,8 @@ function toggleVideo() {
     }
 }
 
-// Add participant video
-function addParticipantVideo(participant) {
+// Creates media container with video, audio, and info elements for participant
+function createParticipantMediaContainer(participant) {
     const videoContainer = document.createElement('div');
     videoContainer.className = 'video-container';
     videoContainer.id = `participant-${participant.identity}`;
@@ -210,11 +216,6 @@ function addParticipantVideo(participant) {
     videoContainer.appendChild(video);
     videoContainer.appendChild(info);
     videoGrid.appendChild(videoContainer);
-    
-    updateParticipantVideo(participant);
-    if (participant !== room.localParticipant) {
-        updateParticipantAudio(participant);
-    }
 }
 
 // Update participant video
@@ -305,8 +306,8 @@ function updateParticipantAudio(participant) {
     }
 }
 
-// Remove participant video
-function removeParticipantVideo(identity) {
+// Removes participant media container from the DOM
+function removeParticipantMediaContainer(identity) {
     const container = document.getElementById(`participant-${identity}`);
     if (container) {
         container.remove();
