@@ -212,8 +212,7 @@ function updateParticipantVideo(participant) {
         const localVideoTrack = room.localParticipant.videoTrack;
         if (localVideoTrack) {
             console.log('Using local video track');
-            video.srcObject = new MediaStream([localVideoTrack.mediaStreamTrack]);
-            video.play().catch(e => console.error('Video play error:', e));
+            localVideoTrack.attach(video);
             return;
         }
     }
@@ -221,9 +220,8 @@ function updateParticipantVideo(participant) {
     console.log('Video track publication:', videoTrackPublication);
     
     if (videoTrackPublication && videoTrackPublication.track) {
-        console.log('Setting video source for:', participant.identity);
-        video.srcObject = new MediaStream([videoTrackPublication.track.mediaStreamTrack]);
-        video.play().catch(e => console.error('Video play error:', e));
+        console.log('Attaching video track for:', participant.identity);
+        videoTrackPublication.track.attach(video);
     } else {
         console.log('No video track found for:', participant.identity);
         // For remote participants, try to wait a bit and retry
@@ -260,9 +258,8 @@ function updateParticipantAudio(participant) {
     console.log('Audio track publication:', audioTrackPublication);
     
     if (audioTrackPublication && audioTrackPublication.track) {
-        console.log('Setting audio source for:', participant.identity);
-        audio.srcObject = new MediaStream([audioTrackPublication.track.mediaStreamTrack]);
-        audio.play().catch(e => console.error('Audio play error:', e));
+        console.log('Attaching audio track for:', participant.identity);
+        audioTrackPublication.track.attach(audio);
     } else {
         console.log('No audio track found for:', participant.identity);
         // For remote participants, try to wait a bit and retry
@@ -326,7 +323,9 @@ function onTrackMuted(publication, participant) {
     if (publication.kind === 'video') {
       console.log(`${participant.identity} turned off camera`);
       const video = document.getElementById(`video-${participant.identity}`);
-      if (video) video.srcObject = null;
+      if (video && publication.track) {
+        publication.track.detach(video);
+      }
     }
   }
   
