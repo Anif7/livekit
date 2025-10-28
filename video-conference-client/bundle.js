@@ -23797,9 +23797,38 @@ var LiveKitApp = (() => {
   var status = document.getElementById("status");
   var videoGrid = document.getElementById("videoGrid");
   var roomNameInput = document.getElementById("roomName");
-  var participantNameInput = document.getElementById("participantName");
   console.log("LiveKit loaded successfully via ES modules");
   status.textContent = "LiveKit loaded. Ready to join room.";
+  function generateRandomParticipantName() {
+    return `user_${crypto.randomUUID()}`;
+  }
+  joinBtn.addEventListener("click", joinRoom);
+  leaveBtn.addEventListener("click", leaveRoom);
+  muteBtn.addEventListener("click", toggleMute);
+  videoBtn.addEventListener("click", toggleVideo);
+  async function joinRoom() {
+    try {
+      const roomName = roomNameInput.value || "test-room";
+      const participantName = generateRandomParticipantName();
+      status.textContent = `Connecting as ${participantName}...`;
+      const token = await generateToken(participantName, roomName);
+      room = new Room();
+      setupRoomEventListeners(room);
+      await room.connect(LIVEKIT_URL, token);
+      await room.localParticipant.enableCameraAndMicrophone();
+      addParticipantVideo(room.localParticipant);
+      room.remoteParticipants.forEach((participant) => {
+        console.log("Adding existing remote participant:", participant.identity);
+        addParticipantVideo(participant);
+        updateParticipantAudio(participant);
+      });
+      status.textContent = `Connected to room: ${roomName}`;
+      updateUI(true);
+    } catch (error) {
+      console.error("Error joining room:", error);
+      status.textContent = `Error: ${error.message}`;
+    }
+  }
   async function generateToken(identity, roomName) {
     const response = await fetch("/token", {
       method: "POST",
@@ -23816,60 +23845,45 @@ var LiveKitApp = (() => {
     }
     return await response.text();
   }
-  async function joinRoom() {
-    try {
-      const roomName = roomNameInput.value || "test-room";
-      const participantName = participantNameInput.value || "Participant";
-      status.textContent = "Connecting...";
-      const token = await generateToken(participantName, roomName);
-      room = new Room();
-      room.on(RoomEvent.ParticipantConnected, (participant) => {
-        console.log("Participant connected:", participant.identity);
-        addParticipantVideo(participant);
-        if (participant !== room.localParticipant) {
-          updateParticipantVideo(participant);
-          updateParticipantAudio(participant);
-        }
-      });
-      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
-        console.log("Participant disconnected:", participant.identity);
-        removeParticipantVideo(participant.identity);
-      });
-      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-        console.log("Track subscribed:", track.kind, participant.identity);
-        if (track.kind === "video") {
-          updateParticipantVideo(participant);
-        } else if (track.kind === "audio") {
-          updateParticipantAudio(participant);
-        }
-      });
-      room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
-        console.log("Track unsubscribed:", track.kind, participant.identity);
-        if (track.kind === "video") {
-          updateParticipantVideo(participant);
-        } else if (track.kind === "audio") {
-          updateParticipantAudio(participant);
-        }
-      });
-      room.on(RoomEvent.Disconnected, () => {
-        console.log("Disconnected from room");
-        status.textContent = "Disconnected";
-        updateUI(false);
-      });
-      await room.connect(LIVEKIT_URL, token);
-      await room.localParticipant.enableCameraAndMicrophone();
-      addParticipantVideo(room.localParticipant);
-      room.remoteParticipants.forEach((participant) => {
-        console.log("Adding existing remote participant:", participant.identity);
-        addParticipantVideo(participant);
-        updateParticipantAudio(participant);
-      });
-      status.textContent = `Connected to room: ${roomName}`;
-      updateUI(true);
-    } catch (error) {
-      console.error("Error joining room:", error);
-      status.textContent = `Error: ${error.message}`;
+  function setupRoomEventListeners(room2) {
+    room2.on(RoomEvent.ParticipantConnected, onParticipantConnected);
+    room2.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+    room2.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
+    room2.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+    room2.on(RoomEvent.Disconnected, onRoomDisconnected);
+  }
+  function onParticipantConnected(participant) {
+    console.log("Participant connected:", participant.identity);
+    addParticipantVideo(participant);
+    if (participant !== room.localParticipant) {
+      updateParticipantVideo(participant);
+      updateParticipantAudio(participant);
     }
+  }
+  function onParticipantDisconnected(participant) {
+    console.log("Participant disconnected:", participant.identity);
+    removeParticipantVideo(participant.identity);
+  }
+  function onTrackSubscribed(track, publication, participant) {
+    console.log("Track subscribed:", track.kind, participant.identity);
+    if (track.kind === "video") {
+      updateParticipantVideo(participant);
+    } else if (track.kind === "audio") {
+      updateParticipantAudio(participant);
+    }
+  }
+  function onTrackUnsubscribed(track, publication, participant) {
+    console.log("Track unsubscribed:", track.kind, participant.identity);
+    if (track.kind === "video") {
+      updateParticipantVideo(participant);
+    } else if (track.kind === "audio") {
+      updateParticipantAudio(participant);
+    }
+  }
+  function onRoomDisconnected() {
+    console.log("Disconnected from room");
+    status.textContent = "Disconnected";
+    updateUI(false);
   }
   async function leaveRoom() {
     if (room) {
@@ -23993,8 +24007,4 @@ var LiveKitApp = (() => {
     muteBtn.disabled = !connected;
     videoBtn.disabled = !connected;
   }
-  joinBtn.addEventListener("click", joinRoom);
-  leaveBtn.addEventListener("click", leaveRoom);
-  muteBtn.addEventListener("click", toggleMute);
-  videoBtn.addEventListener("click", toggleVideo);
 })();

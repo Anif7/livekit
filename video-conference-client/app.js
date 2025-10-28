@@ -20,40 +20,29 @@ const videoBtn = document.getElementById('videoBtn');
 const status = document.getElementById('status');
 const videoGrid = document.getElementById('videoGrid');
 const roomNameInput = document.getElementById('roomName');
-const participantNameInput = document.getElementById('participantName');
 
 console.log('LiveKit loaded successfully via ES modules');
 status.textContent = 'LiveKit loaded. Ready to join room.';
 
-// Generate access token (simplified - in production, this should be done server-side)
-async function generateToken(identity, roomName) {
-    // For this POC, we'll use a simple approach
-    // In production, you should generate tokens server-side
-    const response = await fetch('/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            identity: identity,
-            room: roomName
-        })
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to generate token');
-    }
-    
-    return await response.text();
+// Generates a random participant ID
+function generateRandomParticipantName() {
+    return `user_${crypto.randomUUID()}`;
 }
+
+// Event listeners
+joinBtn.addEventListener('click', joinRoom);
+leaveBtn.addEventListener('click', leaveRoom);
+muteBtn.addEventListener('click', toggleMute);
+videoBtn.addEventListener('click', toggleVideo);
+
 
 // Join room
 async function joinRoom() {
     try {
         const roomName = roomNameInput.value || 'test-room';
-        const participantName = participantNameInput.value || 'Participant';
+        const participantName = generateRandomParticipantName();
         
-        status.textContent = 'Connecting...';
+        status.textContent = `Connecting as ${participantName}...`;
         
         // Generate token
         const token = await generateToken(participantName, roomName);
@@ -62,44 +51,7 @@ async function joinRoom() {
         room = new Room();
         
         // Set up event listeners
-        room.on(RoomEvent.ParticipantConnected, (participant) => {
-            console.log('Participant connected:', participant.identity);
-            addParticipantVideo(participant);
-            // Update video and audio immediately for remote participants
-            if (participant !== room.localParticipant) {
-                updateParticipantVideo(participant);
-                updateParticipantAudio(participant);
-            }
-        });
-        
-        room.on(RoomEvent.ParticipantDisconnected, (participant) => {
-            console.log('Participant disconnected:', participant.identity);
-            removeParticipantVideo(participant.identity);
-        });
-        
-        room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-            console.log('Track subscribed:', track.kind, participant.identity);
-            if (track.kind === 'video') {
-                updateParticipantVideo(participant);
-            } else if (track.kind === 'audio') {
-                updateParticipantAudio(participant);
-            }
-        });
-        
-        room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
-            console.log('Track unsubscribed:', track.kind, participant.identity);
-            if (track.kind === 'video') {
-                updateParticipantVideo(participant);
-            } else if (track.kind === 'audio') {
-                updateParticipantAudio(participant);
-            }
-        });
-        
-        room.on(RoomEvent.Disconnected, () => {
-            console.log('Disconnected from room');
-            status.textContent = 'Disconnected';
-            updateUI(false);
-        });
+        setupRoomEventListeners(room);
         
         // Connect to room
         await room.connect(LIVEKIT_URL, token);
@@ -124,6 +76,83 @@ async function joinRoom() {
         console.error('Error joining room:', error);
         status.textContent = `Error: ${error.message}`;
     }
+}
+
+// Generate access token (simplified - in production, this should be done server-side)
+async function generateToken(identity, roomName) {
+    // For this POC, we'll use a simple approach
+    // In production, you should generate tokens server-side
+    const response = await fetch('/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            identity: identity,
+            room: roomName
+        })
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to generate token');
+    }
+    
+    return await response.text();
+}
+
+// Registers all room event listeners
+function setupRoomEventListeners(room) {
+    room.on(RoomEvent.ParticipantConnected, onParticipantConnected);
+    room.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+    room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
+    room.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+    room.on(RoomEvent.Disconnected, onRoomDisconnected);
+}
+
+// ===== Room Event Handlers =====
+
+// Adds UI elements for newly connected participant and initializes their media
+function onParticipantConnected(participant) {
+    console.log('Participant connected:', participant.identity);
+    addParticipantVideo(participant);
+    // Update video and audio immediately for remote participants
+    if (participant !== room.localParticipant) {
+        updateParticipantVideo(participant);
+        updateParticipantAudio(participant);
+    }
+}
+
+// Removes UI elements when a participant leaves the room
+function onParticipantDisconnected(participant) {
+    console.log('Participant disconnected:', participant.identity);
+    removeParticipantVideo(participant.identity);
+}
+
+// Attaches newly subscribed track to the participant's video or audio element
+function onTrackSubscribed(track, publication, participant) {
+    console.log('Track subscribed:', track.kind, participant.identity);
+    if (track.kind === 'video') {
+        updateParticipantVideo(participant);
+    } else if (track.kind === 'audio') {
+        updateParticipantAudio(participant);
+    }
+}
+
+// Detaches unsubscribed track from the participant's media element
+function onTrackUnsubscribed(track, publication, participant) {
+    console.log('Track unsubscribed:', track.kind, participant.identity);
+    if (track.kind === 'video') {
+        updateParticipantVideo(participant);
+    } else if (track.kind === 'audio') {
+        updateParticipantAudio(participant);
+    }
+}
+
+// Cleans up UI when disconnected from the room
+function onRoomDisconnected() {
+    console.log('Disconnected from room');
+    status.textContent = 'Disconnected';
+    updateUI(false);
 }
 
 // Leave room
@@ -291,9 +320,3 @@ function updateUI(connected) {
     muteBtn.disabled = !connected;
     videoBtn.disabled = !connected;
 }
-
-// Event listeners
-joinBtn.addEventListener('click', joinRoom);
-leaveBtn.addEventListener('click', leaveRoom);
-muteBtn.addEventListener('click', toggleMute);
-videoBtn.addEventListener('click', toggleVideo);
