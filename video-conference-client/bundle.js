@@ -23853,6 +23853,8 @@ var LiveKitApp = (() => {
     room2.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
     room2.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
     room2.on(RoomEvent.Disconnected, onRoomDisconnected);
+    room2.on(RoomEvent.TrackMuted, onTrackMuted);
+    room2.on(RoomEvent.TrackUnmuted, onTrackUnmuted);
   }
   function onParticipantConnected(participant) {
     console.log("Participant connected:", participant.identity);
@@ -23987,24 +23989,35 @@ var LiveKitApp = (() => {
       updateUI(false);
     }
   }
-  function toggleMute() {
-    if (room && room.localParticipant.audioTrack) {
-      isMuted = !isMuted;
-      room.localParticipant.setMicrophoneEnabled(!isMuted);
-      muteBtn.textContent = isMuted ? "Unmute Audio" : "Mute Audio";
-    }
+  async function toggleMute() {
+    if (!room) return;
+    isMuted = !isMuted;
+    await room.localParticipant.setMicrophoneEnabled(!isMuted);
+    muteBtn.textContent = isMuted ? "Unmute Audio" : "Mute Audio";
   }
-  function toggleVideo() {
-    if (room && room.localParticipant.videoTrack) {
-      isVideoOff = !isVideoOff;
-      room.localParticipant.setCameraEnabled(!isVideoOff);
-      videoBtn.textContent = isVideoOff ? "Turn On Video" : "Turn Off Video";
-    }
+  async function toggleVideo() {
+    if (!room) return;
+    isVideoOff = !isVideoOff;
+    await room.localParticipant.setCameraEnabled(!isVideoOff);
+    videoBtn.textContent = isVideoOff ? "Turn On Video" : "Turn Off Video";
   }
   function updateUI(connected) {
     joinBtn.disabled = connected;
     leaveBtn.disabled = !connected;
     muteBtn.disabled = !connected;
     videoBtn.disabled = !connected;
+  }
+  function onTrackMuted(publication, participant) {
+    if (publication.kind === "video") {
+      console.log(`${participant.identity} turned off camera`);
+      const video = document.getElementById(`video-${participant.identity}`);
+      if (video) video.srcObject = null;
+    }
+  }
+  function onTrackUnmuted(publication, participant) {
+    if (publication.kind === "video") {
+      console.log(`${participant.identity} turned on camera`);
+      updateParticipantVideo(participant);
+    }
   }
 })();

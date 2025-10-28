@@ -109,6 +109,8 @@ function setupRoomEventListeners(room) {
     room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
     room.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
     room.on(RoomEvent.Disconnected, onRoomDisconnected);
+    room.on(RoomEvent.TrackMuted, onTrackMuted);
+    room.on(RoomEvent.TrackUnmuted, onTrackUnmuted);
 }
 
 // ===== Room Event Handlers =====
@@ -298,22 +300,19 @@ async function leaveRoom() {
 }
 
 // Toggle mute
-function toggleMute() {
-    if (room && room.localParticipant.audioTrack) {
-        isMuted = !isMuted;
-        room.localParticipant.setMicrophoneEnabled(!isMuted);
-        muteBtn.textContent = isMuted ? 'Unmute Audio' : 'Mute Audio';
-    }
-}
+async function toggleMute() {
+    if (!room) return;
+    isMuted = !isMuted;
+    await room.localParticipant.setMicrophoneEnabled(!isMuted);
+    muteBtn.textContent = isMuted ? 'Unmute Audio' : 'Mute Audio';
+  }
 
-// Toggle video
-function toggleVideo() {
-    if (room && room.localParticipant.videoTrack) {
-        isVideoOff = !isVideoOff;
-        room.localParticipant.setCameraEnabled(!isVideoOff);
-        videoBtn.textContent = isVideoOff ? 'Turn On Video' : 'Turn Off Video';
-    }
-}
+async function toggleVideo() {
+    if (!room) return;
+    isVideoOff = !isVideoOff;
+    await room.localParticipant.setCameraEnabled(!isVideoOff);
+    videoBtn.textContent = isVideoOff ? 'Turn On Video' : 'Turn Off Video';
+  }
 
 // Update UI state
 function updateUI(connected) {
@@ -322,3 +321,20 @@ function updateUI(connected) {
     muteBtn.disabled = !connected;
     videoBtn.disabled = !connected;
 }
+
+function onTrackMuted(publication, participant) {
+    if (publication.kind === 'video') {
+      console.log(`${participant.identity} turned off camera`);
+      const video = document.getElementById(`video-${participant.identity}`);
+      if (video) video.srcObject = null;
+    }
+  }
+  
+  function onTrackUnmuted(publication, participant) {
+    if (publication.kind === 'video') {
+      console.log(`${participant.identity} turned on camera`);
+      updateParticipantVideo(participant);
+    }
+  }  
+
+  
