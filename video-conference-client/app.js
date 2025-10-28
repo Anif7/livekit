@@ -154,41 +154,6 @@ function onTrackUnsubscribed(track, publication, participant) {
     }
 }
 
-// Cleans up UI when disconnected from the room
-function onRoomDisconnected() {
-    console.log('Disconnected from room');
-    status.textContent = 'Disconnected';
-    updateUI(false);
-}
-
-// Leave room
-async function leaveRoom() {
-    if (room) {
-        await room.disconnect();
-        room = null;
-        videoGrid.innerHTML = '';
-        status.textContent = 'Left room';
-        updateUI(false);
-    }
-}
-
-// Toggle mute
-function toggleMute() {
-    if (room && room.localParticipant.audioTrack) {
-        isMuted = !isMuted;
-        room.localParticipant.setMicrophoneEnabled(!isMuted);
-        muteBtn.textContent = isMuted ? 'Unmute Audio' : 'Mute Audio';
-    }
-}
-
-// Toggle video
-function toggleVideo() {
-    if (room && room.localParticipant.videoTrack) {
-        isVideoOff = !isVideoOff;
-        room.localParticipant.setCameraEnabled(!isVideoOff);
-        videoBtn.textContent = isVideoOff ? 'Turn On Video' : 'Turn Off Video';
-    }
-}
 
 // Creates media container with video, audio, and info elements for participant
 function createParticipantMediaContainer(participant) {
@@ -311,6 +276,42 @@ function removeParticipantMediaContainer(identity) {
     const container = document.getElementById(`participant-${identity}`);
     if (container) {
         container.remove();
+    }
+}
+
+// Cleans up UI when disconnected from the room
+function onRoomDisconnected() {
+    console.log('Disconnected from room');
+    status.textContent = 'Disconnected';
+    updateUI(false);
+}
+
+// Leave room
+async function leaveRoom() {
+    if (room) {
+        await room.disconnect();
+        room = null;
+        videoGrid.innerHTML = '';
+        status.textContent = 'Left room';
+        updateUI(false);
+    }
+}
+
+// Toggle mute
+function toggleMute() {
+    if (room && room.localParticipant.audioTrack) {
+        isMuted = !isMuted;
+        room.localParticipant.setMicrophoneEnabled(!isMuted);
+        muteBtn.textContent = isMuted ? 'Unmute Audio' : 'Mute Audio';
+    }
+}
+
+// Toggle video
+function toggleVideo() {
+    if (room && room.localParticipant.videoTrack) {
+        isVideoOff = !isVideoOff;
+        room.localParticipant.setCameraEnabled(!isVideoOff);
+        videoBtn.textContent = isVideoOff ? 'Turn On Video' : 'Turn Off Video';
     }
 }
 
