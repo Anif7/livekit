@@ -28,29 +28,21 @@ livekit/
 - **Token-based Authentication**: Secure room access
 - **External Access**: ngrok support for global access
 
-## 🛠️ Setup Instructions
-
-### 1. Start LiveKit Server
-
-```bash
-cd livekit-server
-./livekit-server --config livekit.yaml --dev
-```
-
-### 2. Start Video Conference Client
+## 🛠️ Setup Instructions (Simple)
 
 ```bash
 cd video-conference-client
 npm install
-node server.js
+cd ..
+npm install
+./start.sh
 ```
 
-### 3. Access the Application
+Then open:
+- Local app: http://localhost:3000
+- LiveKit WS (default in `app.js`): ws://localhost:7880
 
-- **Local**: http://localhost:3000
-- **External**: Use ngrok for global access
-
-## 🌐 External Access with ngrok
+## 🌐 External Access with ngrok (optional)
 
 ### Option 1: Separate ngrok tunnels (Recommended)
 
